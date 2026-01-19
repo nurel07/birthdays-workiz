@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const puppeteer = require('puppeteer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,6 +86,47 @@ app.get('/api/image/:employeeId', async (req, res) => {
     } catch (error) {
         console.error('Error proxying image:', error);
         res.status(500).json({ error: 'Failed to proxy image' });
+    }
+});
+
+// Screenshot endpoint - captures the birthday display as a PNG image
+app.get('/api/screenshot', async (req, res) => {
+    const baseUrl = `http://localhost:${PORT}`;
+
+    try {
+        console.log('Launching Puppeteer for screenshot...');
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+
+        const page = await browser.newPage();
+
+        // Set viewport to match the design dimensions
+        await page.setViewport({ width: 1080, height: 1920 });
+
+        // Navigate to the page
+        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+
+        // Wait a bit for images to load
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Take screenshot
+        const screenshot = await page.screenshot({
+            type: 'png',
+            clip: { x: 0, y: 0, width: 1080, height: 1920 }
+        });
+
+        await browser.close();
+
+        console.log('Screenshot captured successfully');
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'attachment; filename="birthdays.png"');
+        res.send(screenshot);
+    } catch (error) {
+        console.error('Error generating screenshot:', error);
+        res.status(500).json({ error: 'Failed to generate screenshot', details: error.message });
     }
 });
 
