@@ -1,0 +1,988 @@
+{
+  "name": "Birthdays Workiz",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        -224
+      ],
+      "id": "660fd592-4e74-4e7b-ae14-9239825b00b9",
+      "name": "Schedule Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -144
+      ],
+      "id": "c0c77ffc-4829-48bd-bb32-4d6e69841556",
+      "name": "Split Out",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ae87e8c-9f81-4dc0-927d-6dad7e9a42fe",
+              "name": "attributes.preferred_name.value",
+              "value": "={{ $json.attributes.preferred_name.value }}",
+              "type": "string"
+            },
+            {
+              "id": "c65320ab-2c38-4320-a98f-aee48a305406",
+              "name": "attributes.email.value",
+              "value": "={{ $json.attributes.email.value }}",
+              "type": "string"
+            },
+            {
+              "id": "21841cf7-7f94-49a0-b95a-a86c22baa258",
+              "name": "attributes.position.value",
+              "value": "={{ $json.attributes.position.value }}",
+              "type": "string"
+            },
+            {
+              "id": "02c37667-5744-4b96-bdca-3fc20a6134a9",
+              "name": "attributes.supervisor.value.attributes.preferred_name.value",
+              "value": "={{ $json.attributes.supervisor.value.attributes.preferred_name.value }}",
+              "type": "string"
+            },
+            {
+              "id": "f05851a8-bca4-4683-b1b3-38752864c8cc",
+              "name": "attributes.supervisor.value.attributes.email.value",
+              "value": "={{ $json.attributes.supervisor.value.attributes.email.value }}",
+              "type": "string"
+            },
+            {
+              "id": "17388db1-bc64-41f0-815e-1511cf588a00",
+              "name": "attributes.hire_date.value",
+              "value": "={{ $json.attributes.hire_date.value }}",
+              "type": "string"
+            },
+            {
+              "id": "2473dc34-4725-44f7-afed-aa8b6671d869",
+              "name": "attributes.profile_picture.value",
+              "value": "={{ $json.attributes.profile_picture.value }}",
+              "type": "string"
+            },
+            {
+              "id": "a51084b1-5134-41a3-8dac-f97c0f033015",
+              "name": "attributes.dynamic_1449280.value",
+              "value": "={{ $json.attributes.dynamic_1449280.value }}",
+              "type": "string"
+            },
+            {
+              "id": "e2d8e6fd-01d2-4661-bc4c-4fd8058c9b5f",
+              "name": "attributes.show-birthday.value",
+              "value": "={{ $json.attributes.dynamic_13622468.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        -144
+      ],
+      "id": "9de83815-3a95-4c61-9862-4117c60eb7e4",
+      "name": "Edit Fields",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "24b3f969-9e90-4454-8fe6-5fd35b8a4651",
+              "leftValue": "={{\n(() => {\n  // Path based on your current output\n  const bdayStr = $json.attributes.dynamic_1449280?.value; \n  if (!bdayStr) return false;\n\n  const bdayDate = new Date(bdayStr);\n  const today = new Date(); // It is Jan 19, 2026\n\n  // 1. Force the birthday to the current year (2026)\n  const bdayThisYear = new Date(today.getFullYear(), bdayDate.getMonth(), bdayDate.getDate());\n\n  // 2. Define the \"Week Window\" (Sunday to Saturday)\n  const startOfWeek = new Date(today);\n  startOfWeek.setDate(today.getDate() - today.getDay());\n  startOfWeek.setHours(0, 0, 0, 0);\n\n  const endOfWeek = new Date(startOfWeek);\n  endOfWeek.setDate(startOfWeek.getDate() + 6);\n  endOfWeek.setHours(23, 59, 59, 999);\n\n  // 3. Return true if birthday falls in this window\n  return bdayThisYear >= startOfWeek && bdayThisYear <= endOfWeek;\n})()\n}}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "321c88f2-5b32-4ae2-9f68-9f626a8795ce",
+              "leftValue": "={{ $json.attributes[\"show-birthday\"].value }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        -144
+      ],
+      "id": "e1f99e4f-65ca-43f6-87ca-21f1487a8721",
+      "name": "Filter This Week Birthdays",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.personio.de/v1/company/employees",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer papi-GQpyMpymInjpLehA7UbwvOoOp795Zl_MjHAMkuWQibH4OUN2Ki-ODXzqGDrZFyE5EwQidYlziySPwwXpA3QXSQ"
+            },
+            {
+              "name": "Cookie",
+              "value": "personio_session=eyJpdiI6IlRsWVJmYXlqOU9nS2pUMys4R3U3bnc9PSIsInZhbHVlIjoibVl1NUtrNVpETzR2Ri9aajh2N0hpS1ZDb3BKK1JuekNkU2Fkb0xhQVRhRmV4SGpTbmI5QjhlY1dsejdwNXBnazdONU5HMnVMOVJpTHRoUzNUSmYxMkRNbTNuUDhiNUNXc1M3dGFXdlY2RGtkM25YZXJNQmRRc3drdmwyb1N4ZXkiLCJtYWMiOiIwMWFiYWRjZDJiNDQ5NTFlMzBhMzZmY2Y0NWZhODM2Mjg4NDZkYmVlYzQ1NGE5NjVmYTk4MTViYTM0ZDJiODE4IiwidGFnIjoiIn0%3D"
+            },
+            {
+              "name": "cookie",
+              "value": "personio_session=eyJpdiI6IlRsWVJmYXlqOU9nS2pUMys4R3U3bnc9PSIsInZhbHVlIjoibVl1NUtrNVpETzR2Ri9aajh2N0hpS1ZDb3BKK1JuekNkU2Fkb0xhQVRhRmV4SGpTbmI5QjhlY1dsejdwNXBnazdONU5HMnVMOVJpTHRoUzNUSmYxMkRNbTNuUDhiNUNXc1M3dGFXdlY2RGtkM25YZXJNQmRRc3drdmwyb1N4ZXkiLCJtYWMiOiIwMWFiYWRjZDJiNDQ5NTFlMzBhMzZmY2Y0NWZhODM2Mjg4NDZkYmVlYzQ1NGE5NjVmYTk4MTViYTM0ZDJiODE4IiwidGFnIjoiIn0%3D;"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        -144
+      ],
+      "id": "c8dd85ad-d498-4625-b881-c0ba7e6f58e4",
+      "name": "Get All Employees Data",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const attr = item.json.attributes;\n  const name = attr.preferred_name?.value || attr.first_name?.value || \"Employee\";\n  const rawDate = attr.dynamic_1449280?.value;\n  \n  let birthdayString = \"\";\n  \n  if (rawDate) {\n    // 1. Convert the Personio string to an n8n DateTime object (Luxon)\n    // 2. Set the year to 2026\n    // 3. Format exactly as you want: \"Sunday, Jan 19\"\n    birthdayString = DateTime.fromISO(rawDate).set({ year: 2026 }).toFormat('cccc, LLL d');\n  }\n\n  results.push({\n    json: {\n      name: name,\n      imageUrl: attr.profile_picture?.value || \"\",\n      birthdayString: birthdayString\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -144
+      ],
+      "id": "b7ab02bf-9ef8-45ad-93d7-ad4761c4a9f9",
+      "name": "Code in JavaScript",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const RAILWAY_BASE_URL = \"https://radiant-illumination-production-911f.up.railway.app\";\n\nreturn $input.all().map(item => {\n  const data = item.json;\n  \n  // Extract employee ID from Personio URL\n  // Format: https://api.personio.de/v1/company/employees/{id}/profile-picture\n  const match = data.imageUrl.match(/employees\\/(\\d+)\\/profile-picture/);\n  const employeeId = match ? match[1] : null;\n  \n  return {\n    json: {\n      name: data.name,\n      imageUrl: employeeId \n        ? `${RAILWAY_BASE_URL}/api/image/${employeeId}` \n        : data.imageUrl,\n      birthdayString: data.birthdayString\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -144
+      ],
+      "id": "9f787b7e-048f-435b-b51c-855c40072611",
+      "name": "Code in JavaScript1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/birthdays",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1360,
+        -144
+      ],
+      "id": "c5e4e508-e759-4c59-8e47-0939801d0c6a",
+      "name": "POST to API",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/screenshot",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1568,
+        -144
+      ],
+      "id": "e57a2e9d-4dc1-44fc-a320-1e55697990af",
+      "name": "GET image from API",
+      "executeOnce": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -160,
+        496
+      ],
+      "id": "b990941b-4de4-4c5c-86d7-d15e0af38881",
+      "name": "Schedule Trigger1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/screenshot",
+        "additionalFields": {
+          "public_id": "weekly-birthdays",
+          "upload_preset": "y_bday"
+        }
+      },
+      "type": "n8n-nodes-cloudinary.cloudinary",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        -144
+      ],
+      "id": "106b75b3-9f84-49e8-9073-41d0a9a3f924",
+      "name": "Upload an asset from URL",
+      "credentials": {
+        "cloudinaryApi": {
+          "id": "OM2Wcm16sPajzbpS",
+          "name": "Workiz Yevgen Cloudinary"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.webflow.com/v2/collections/696e23f9eb0331c85cd9df4b/items/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        928,
+        400
+      ],
+      "id": "a65942ed-2818-4639-a2e6-c68f2882ee9e",
+      "name": "Delete all items",
+      "executeOnce": false,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "flfbT4txHyaMfX1Q",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "198aa1c4-77fb-4df5-a335-00e26b94fd94",
+              "leftValue": "={{ $json.pagination.total }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        560
+      ],
+      "id": "1c284851-79d1-41e4-bd3e-90aa2904c243",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.items || [];\nreturn items.map(item => ({\n  json: { id: item.id }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        400
+      ],
+      "id": "8176a615-961f-4b86-a6bc-9623e9aae5eb",
+      "name": "Extract IDs"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1136,
+        560
+      ],
+      "id": "a2194085-f7ef-4cd2-94f3-d38b895fa2e2",
+      "name": "Waiting for all nodes"
+    },
+    {
+      "parameters": {
+        "url": "https://api.cloudinary.com/v1_1/workiz/resources/image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "prefix",
+              "value": "il-tv-presentation"
+            },
+            {
+              "name": "type",
+              "value": "upload"
+            },
+            {
+              "name": "max_results",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1376,
+        560
+      ],
+      "id": "cd6dd5ba-b501-4ac4-b72b-9139263b1319",
+      "name": "Get images from Cloudinary",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "h3HTRirFzxShtpNb",
+          "name": "Cloudinary Yev Workiz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const images = $input.all()[0].json.resources.map(img => ({\n  public_id: img.public_id,\n  url: img.secure_url,\n  filename: img.public_id.split('/').pop()\n}));\nreturn images.map(img => ({ json: img }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        560
+      ],
+      "id": "58f832df-17c2-49f4-9904-0f6a6bfadb5d",
+      "name": "Prepare for Webflow"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.webflow.com/v2/collections/696e23f9eb0331c85cd9df4b/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"isArchived\": false,\n  \"isDraft\": false,\n  \"fieldData\": {\n    \"name\": \"{{ $json.filename }}\",    \"image-url\": \"{{ $json.url }}\"\n\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1824,
+        560
+      ],
+      "id": "4d1410e3-581b-4041-b080-8461b0953ce3",
+      "name": "Send To Webflow",
+      "executeOnce": false,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "flfbT4txHyaMfX1Q",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.webflow.com/v2/collections/696e23f9eb0331c85cd9df4b/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        576
+      ],
+      "id": "89dc44ad-9798-48a7-ba71-9656a49c4f76",
+      "name": "List Webflow Items",
+      "executeOnce": false,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "flfbT4txHyaMfX1Q",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Create Birthday Image and upload to Cloudinary\n",
+        "height": 608,
+        "width": 3104
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "af1948f7-4bab-4451-9bbb-fd2019927a4f",
+      "name": "Sticky Note",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "# Sync Cloudinary Folder With Webflow CMS",
+        "height": 768,
+        "width": 3248
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "7e655d44-f6f1-4ce5-b1c5-81e2e46d626b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "path": "12df06f2-6c1c-43e6-a242-85600cc3df0c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -176,
+        720
+      ],
+      "id": "81a89f39-42ac-4e24-9cbd-9a545d11805a",
+      "name": "Webhook",
+      "webhookId": "12df06f2-6c1c-43e6-a242-85600cc3df0c",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "123",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2000,
+        -144
+      ],
+      "id": "347fb3fd-159c-4908-b8d4-4830747f0a0b",
+      "name": "Send a message1",
+      "webhookId": "971dc0bd-451b-4264-82e7-8ee6c17e8e02",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        576
+      ],
+      "id": "3db2b4ac-55cf-43f2-9b06-91cfc06aeffc",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-potatoe.workiz.run/webhook/12df06f2-6c1c-43e6-a242-85600cc3df0c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2208,
+        -144
+      ],
+      "id": "7bbf7dc0-0712-438c-8173-2024488fc532",
+      "name": "Send webhook to Sync folder",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "={{ $json.message }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2528,
+        560
+      ],
+      "id": "c06e0769-15aa-4dd9-805f-45bc1bb5e888",
+      "name": "Send a message",
+      "webhookId": "971dc0bd-451b-4264-82e7-8ee6c17e8e02",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        368
+      ],
+      "id": "c0b49209-c086-4487-af66-869b6eddb86d",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "=❌ *Slideshow Sync Failed*\n⚠️ Error: {{ $json.error.message }}\n📍 Node: {{ $json.error.node }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2288,
+        368
+      ],
+      "id": "6831ced3-12bf-41e0-89b1-e1ad31f865cb",
+      "name": "Send a message2",
+      "webhookId": "971dc0bd-451b-4264-82e7-8ee6c17e8e02",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.webflow.com/v2/collections/696e23f9eb0331c85cd9df4b/items/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { itemIds: $json.itemIds } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2320,
+        560
+      ],
+      "id": "bc6f9794-8857-4dec-bb6f-d40d8bdae8bb",
+      "name": "Publish Items",
+      "executeOnce": false,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "flfbT4txHyaMfX1Q",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst itemIds = items.map(item => item.json.id);\nreturn [{\n  json: {\n    itemIds: itemIds,\n    message: `✅ *Slideshow Sync Complete*\\n\\n📊 *${itemIds.length} items* published`,\n    count: itemIds.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        560
+      ],
+      "id": "203a6381-a102-4116-96e8-7d4bd87f78d1",
+      "name": "Pepare message and id's"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Employees Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Filter This Week Birthdays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Employees Data": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter This Week Birthdays": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "POST to API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to API": {
+      "main": [
+        [
+          {
+            "node": "GET image from API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET image from API": {
+      "main": [
+        [
+          {
+            "node": "Upload an asset from URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract IDs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Waiting for all nodes",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Delete all items": {
+      "main": [
+        [
+          {
+            "node": "Waiting for all nodes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract IDs": {
+      "main": [
+        [
+          {
+            "node": "Delete all items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waiting for all nodes": {
+      "main": [
+        [
+          {
+            "node": "Get images from Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get images from Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Webflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Webflow": {
+      "main": [
+        [
+          {
+            "node": "Send To Webflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Webflow Items": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Upload an asset from URL": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Send webhook to Sync folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "List Webflow Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send To Webflow": {
+      "main": [
+        [
+          {
+            "node": "Pepare message and id's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Items": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pepare message and id's": {
+      "main": [
+        [
+          {
+            "node": "Publish Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jerusalem",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "c5bfac80-a7b1-416d-a047-3dfa25ef05c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c65185ee08a244dcb6ee1c16ec55c7498e0424b2d7cc8b8b1dbb06664bc66ad6"
+  },
+  "id": "O6ID1N7xR8rgWK7aGKWrm",
+  "tags": []
+}

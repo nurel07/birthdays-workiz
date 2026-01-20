@@ -8,6 +8,30 @@ const puppeteer = require('puppeteer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// API Key for protected endpoints (set via environment variable)
+const API_KEY = process.env.API_KEY;
+
+// Authentication middleware
+const requireAuth = (req, res, next) => {
+    if (!API_KEY) {
+        // If no API_KEY is set, skip authentication (dev mode)
+        console.warn('Warning: API_KEY not set, authentication disabled');
+        return next();
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    if (token !== API_KEY) {
+        return res.status(403).json({ error: 'Forbidden: Invalid API key' });
+    }
+
+    next();
+};
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '.')));
@@ -33,13 +57,13 @@ try {
     console.error("Error reading birthdays.json:", err);
 }
 
-// GET endpoint to retrieve birthdays
+// GET endpoint to retrieve birthdays (public)
 app.get('/api/birthdays', (req, res) => {
     res.json(birthdays);
 });
 
-// POST endpoint to update birthdays
-app.post('/api/birthdays', (req, res) => {
+// POST endpoint to update birthdays (protected)
+app.post('/api/birthdays', requireAuth, (req, res) => {
     const newBirthdays = req.body;
 
     if (!Array.isArray(newBirthdays)) {
@@ -89,8 +113,8 @@ app.get('/api/image/:employeeId', async (req, res) => {
     }
 });
 
-// Screenshot endpoint - captures the birthday display as a PNG image
-app.get('/api/screenshot', async (req, res) => {
+// Screenshot endpoint - captures the birthday display as a PNG image (protected)
+app.get('/api/screenshot', requireAuth, async (req, res) => {
     const baseUrl = `http://localhost:${PORT}`;
 
     try {
