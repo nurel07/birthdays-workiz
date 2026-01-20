@@ -79,8 +79,63 @@ app.post('/api/birthdays', requireAuth, (req, res) => {
     res.json({ message: "Birthdays updated successfully", count: birthdays.length });
 });
 
-// Personio API credentials for image proxy (set via environment variable)
-const PERSONIO_TOKEN = process.env.PERSONIO_TOKEN;
+// Personio API credentials (set via environment variables)
+const PERSONIO_CLIENT_ID = process.env.PERSONIO_CLIENT_ID;
+const PERSONIO_CLIENT_SECRET = process.env.PERSONIO_CLIENT_SECRET;
+
+// Token cache
+let personioTokenCache = {
+    token: null,
+    expiresAt: 0
+};
+
+// Function to get a valid Personio token (auto-refreshes when expired)
+async function getPersonioToken() {
+    const now = Date.now();
+
+    // Return cached token if still valid (with 5 minute buffer)
+    if (personioTokenCache.token && personioTokenCache.expiresAt > now + 5 * 60 * 1000) {
+        return personioTokenCache.token;
+    }
+
+    // Request a new token
+    console.log('Refreshing Personio token...');
+
+    try {
+        const response = await fetch('https://api.personio.de/v1/auth', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                client_id: PERSONIO_CLIENT_ID,
+                client_secret: PERSONIO_CLIENT_SECRET
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Auth failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.data?.token) {
+            throw new Error('Invalid auth response');
+        }
+
+        // Cache the token
+        personioTokenCache = {
+            token: data.data.token,
+            expiresAt: now + (data.data.expires_in * 1000) // Convert seconds to ms
+        };
+
+        console.log('Personio token refreshed successfully');
+        return personioTokenCache.token;
+    } catch (error) {
+        console.error('Failed to refresh Personio token:', error);
+        throw error;
+    }
+}
 
 // Image proxy endpoint to fetch Personio profile pictures
 app.get('/api/image/:employeeId', async (req, res) => {
@@ -88,9 +143,11 @@ app.get('/api/image/:employeeId', async (req, res) => {
     const personioUrl = `https://api.personio.de/v1/company/employees/${employeeId}/profile-picture`;
 
     try {
+        const token = await getPersonioToken();
+
         const response = await fetch(personioUrl, {
             headers: {
-                'Authorization': `Bearer ${PERSONIO_TOKEN}`
+                'Authorization': `Bearer ${token}`
             }
         });
 
