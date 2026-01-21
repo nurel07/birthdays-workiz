@@ -2,7 +2,6 @@
     --bg-dark: #1a1a1a;
     --card-bg: rgba(56, 68, 77, 0.95);
     --text-white: #ffffff;
-    --text-yellow: #fbbf24;
     --font-family: 'Google Sans Flex', sans-serif;
 }
 
@@ -31,7 +30,7 @@ body {
     width: 1080px;
     height: 1920px;
 
-    background-image: url('https://cdn.prod.website-files.com/626f8f4af1df65572fcaeb58/696dfddd52876a0edc9f2b3c_birthday-bg.jpg');
+    background-image: url('https://cdn.prod.website-files.com/626f8f4af1df65572fcaeb58/6970fb14ad3d243b5e005dcf_anniversaries-bg.jpg');
     background-size: cover;
     background-position: center;
     position: relative;
@@ -144,9 +143,9 @@ body {
     line-height: 1.1;
 }
 
-.card-date {
+.card-anniversary {
     font-size: clamp(24px, 19cqh, 42px);
     /* Scales from 18px up to 42px max */
-    color: var(--text-yellow);
     font-weight: 400;
+    /* Color will be set dynamically via inline style */
 }

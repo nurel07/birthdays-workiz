@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Danny Zastenker",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/28171912",
+    "anniversary": "1 year",
+    "color": "#FFD400",
+    "years": 1
+  },
+  {
+    "name": "Vova Slovo",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/28166448",
+    "anniversary": "1 year",
+    "color": "#FFD400",
+    "years": 1
+  },
+  {
+    "name": "Adi Tsabari",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/19610572",
+    "anniversary": "2 years",
+    "color": "#FF9500",
+    "years": 2
+  },
+  {
+    "name": "Jay Suneel Kelkar",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/13326672",
+    "anniversary": "3 years",
+    "color": "#FF5A2C",
+    "years": 3
+  },
+  {
+    "name": "Erik Palmer",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/13054068",
+    "anniversary": "3 years",
+    "color": "#FF5A2C",
+    "years": 3
+  },
+  {
+    "name": "Shai  Forster",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/6464554",
+    "anniversary": "4 years",
+    "color": "#D52CFF",
+    "years": 4
+  },
+  {
+    "name": "Idan Kadosh",
+    "imageUrl": "https://radiant-illumination-production-911f.up.railway.app/api/image/2373741",
+    "anniversary": "8 years",
+    "color": "#00AEFF",
+    "years": 8
+  }
+]

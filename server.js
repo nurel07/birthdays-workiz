@@ -57,6 +57,22 @@ try {
     console.error("Error reading birthdays.json:", err);
 }
 
+// In-memory storage for anniversaries
+let anniversaries = [];
+const ANNIVERSARIES_FILE = 'anniversaries.json';
+
+try {
+    if (fs.existsSync(ANNIVERSARIES_FILE)) {
+        const data = fs.readFileSync(ANNIVERSARIES_FILE, 'utf8');
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+            anniversaries = parsed;
+        }
+    }
+} catch (err) {
+    console.error("Error reading anniversaries.json:", err);
+}
+
 // GET endpoint to retrieve birthdays (public)
 app.get('/api/birthdays', (req, res) => {
     res.json(birthdays);
@@ -78,6 +94,29 @@ app.post('/api/birthdays', requireAuth, (req, res) => {
     console.log("Updated birthdays:", birthdays.length);
     res.json({ message: "Birthdays updated successfully", count: birthdays.length });
 });
+
+// GET endpoint to retrieve anniversaries (public)
+app.get('/api/anniversaries', (req, res) => {
+    res.json(anniversaries);
+});
+
+// POST endpoint to update anniversaries (protected)
+app.post('/api/anniversaries', requireAuth, (req, res) => {
+    const newAnniversaries = req.body;
+
+    if (!Array.isArray(newAnniversaries)) {
+        return res.status(400).json({ error: "Invalid data format. Expected an array." });
+    }
+
+    anniversaries = newAnniversaries;
+
+    // Persist to file
+    fs.writeFileSync(ANNIVERSARIES_FILE, JSON.stringify(anniversaries, null, 2));
+
+    console.log("Updated anniversaries:", anniversaries.length);
+    res.json({ message: "Anniversaries updated successfully", count: anniversaries.length });
+});
+
 
 // Personio API credentials (set via environment variables)
 const PERSONIO_CLIENT_ID = process.env.PERSONIO_CLIENT_ID;
@@ -207,6 +246,47 @@ app.get('/api/screenshot', requireAuth, async (req, res) => {
         res.send(screenshot);
     } catch (error) {
         console.error('Error generating screenshot:', error);
+        res.status(500).json({ error: 'Failed to generate screenshot', details: error.message });
+    }
+});
+
+// Screenshot endpoint for anniversaries - captures the anniversary display as a PNG image (protected)
+app.get('/api/anniversaries/screenshot', requireAuth, async (req, res) => {
+    const baseUrl = `http://localhost:${PORT}`;
+
+    try {
+        console.log('Launching Puppeteer for anniversaries screenshot...');
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+
+        const page = await browser.newPage();
+
+        // Set viewport to match the design dimensions
+        await page.setViewport({ width: 1080, height: 1920 });
+
+        // Navigate to the anniversaries page
+        await page.goto(`${baseUrl}/anniversaries.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+
+        // Wait a bit for images to load
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Take screenshot
+        const screenshot = await page.screenshot({
+            type: 'png',
+            clip: { x: 0, y: 0, width: 1080, height: 1920 }
+        });
+
+        await browser.close();
+
+        console.log('Anniversaries screenshot captured successfully');
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'attachment; filename="anniversaries.png"');
+        res.send(screenshot);
+    } catch (error) {
+        console.error('Error generating anniversaries screenshot:', error);
         res.status(500).json({ error: 'Failed to generate screenshot', details: error.message });
     }
 });
