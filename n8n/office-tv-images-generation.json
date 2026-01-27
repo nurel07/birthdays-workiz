@@ -1,0 +1,1055 @@
+{
+  "name": "office-tv-images-generation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        784
+      ],
+      "id": "4a650d93-f8f0-4d18-a643-349aad66f34f",
+      "name": "Weekly Trigger - Birthdays & Anniversaries"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "545bf2a3-51f9-41d8-ad04-7103935dab07",
+              "name": "PERSONIO_CLIENT_ID",
+              "value": "papi-c4e13b50-fa81-4108-97c7-b1d052653509",
+              "type": "string"
+            },
+            {
+              "id": "9a624d8e-ed9f-4656-8dbc-2068c419f7d4",
+              "name": "PERSONIO_CLIENT_SECRET",
+              "value": "papi-YWNlZTllYWUtYTNhOC00ZmNlLThmOGYtYzMwZWM2NWU0MTVl",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        784
+      ],
+      "id": "6e8b5f5e-687c-4433-b2ec-502172a17464",
+      "name": "Set Constants"
+    },
+    {
+      "parameters": {
+        "url": "https://api.personio.de/v1/company/employees",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.data.token }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        784
+      ],
+      "id": "5e9a4d72-e616-44a8-bfaa-5f80bf40a628",
+      "name": "Fetch All Employees"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        784
+      ],
+      "id": "280d2dcf-c311-4810-8601-c262d0c5ef32",
+      "name": "Split Employee Records"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ae87e8c-9f81-4dc0-927d-6dad7e9a42fe",
+              "name": "preferred_name",
+              "value": "={{ $json.attributes.preferred_name?.value || $json.attributes.first_name?.value || 'Employee' }}",
+              "type": "string"
+            },
+            {
+              "id": "c65320ab-2c38-4320-a98f-aee48a305406",
+              "name": "email",
+              "value": "={{ $json.attributes.email?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "21841cf7-7f94-49a0-b95a-a86c22baa258",
+              "name": "position",
+              "value": "={{ $json.attributes.position?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "02c37667-5744-4b96-bdca-3fc20a6134a9",
+              "name": "supervisor_name",
+              "value": "={{ $json.attributes.supervisor?.value?.attributes?.preferred_name?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "f05851a8-bca4-4683-b1b3-38752864c8cc",
+              "name": "supervisor_email",
+              "value": "={{ $json.attributes.supervisor?.value?.attributes?.email?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "17388db1-bc64-41f0-815e-1511cf588a00",
+              "name": "hire_date",
+              "value": "={{ $json.attributes.hire_date?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "2473dc34-4725-44f7-afed-aa8b6671d869",
+              "name": "profile_picture",
+              "value": "={{ $json.attributes.profile_picture?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "a51084b1-5134-41a3-8dac-f97c0f033015",
+              "name": "birthday",
+              "value": "={{ $json.attributes.dynamic_1449280?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "e2d8e6fd-01d2-4661-bc4c-4fd8058c9b5f",
+              "name": "show_birthday",
+              "value": "={{ $json.attributes.dynamic_13622468?.value }}",
+              "type": "string"
+            },
+            {
+              "id": "e0772d13-4053-4dbd-993f-6836341ecb3a",
+              "name": "termination_date",
+              "value": "={{ $json.attributes.termination_date?.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1664,
+        784
+      ],
+      "id": "20fb5b96-9b0c-4515-80be-87879b27be15",
+      "name": "Normalize Employee Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-active-employee",
+              "leftValue": "={{\n(() => {\n  const termDate = $json.termination_date;\n  if (!termDate) return true;\n  const today = DateTime.now().setZone('Asia/Jerusalem').startOf('day');\n  return DateTime.fromISO(termDate) > today;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "has-birthday",
+              "leftValue": "={{ !!$json.birthday }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "birthday-is-this-week",
+              "leftValue": "={{\n(() => {\n  const bdayStr = $json.birthday;\n  if (!bdayStr) return false;\n\n  const tz = 'Asia/Jerusalem';\n  const today = DateTime.now().setZone(tz);\n  const bdayDate = DateTime.fromISO(bdayStr).setZone(tz);\n\n  // Set birthday to current year\n  const bdayThisYear = bdayDate.set({ year: today.year });\n\n  // Calculate week boundaries (Sunday to Saturday)\n  const startOfWeek = today.startOf('week').minus({ days: 1 }); // Luxon weeks start Monday, adjust to Sunday\n  const endOfWeek = startOfWeek.plus({ days: 6 }).endOf('day');\n\n  return bdayThisYear >= startOfWeek && bdayThisYear <= endOfWeek;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "show-birthday-not-no",
+              "leftValue": "={{ $json.show_birthday }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        608
+      ],
+      "id": "4bca19ed-0da0-4d9c-baf9-89260262324f",
+      "name": "Filter This Week Birthdays"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-has-items",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2080,
+        608
+      ],
+      "id": "f8e0970b-9368-439d-928e-8093cd5c8343",
+      "name": "Has Birthdays This Week?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const RAILWAY_BASE_URL = 'https://radiant-illumination-production-911f.up.railway.app';\nconst tz = 'Asia/Jerusalem';\n\nreturn $input.all().map(item => {\n  const data = item.json;\n  \n  // Format birthday string\n  let birthdayString = '';\n  if (data.birthday) {\n    // We get \"today\" in the local zone to grab the current year\n    const today = DateTime.now().setZone(tz);\n    \n    // Parse the birthday, force it into the local zone, \n    // then swap the year to the current one for the display string.\n    birthdayString = DateTime.fromISO(data.birthday)\n      .setZone(tz) \n      .set({ year: today.year })\n      .toFormat('cccc, LLL d');\n  }\n  \n  // Transform image URL to proxy\n  let imageUrl = data.profile_picture || '';\n  const match = imageUrl.match(/employees\\/(\\d+)\\/profile-picture/);\n  if (match) {\n    imageUrl = `${RAILWAY_BASE_URL}/api/image/${match[1]}`;\n  }\n  \n  return {\n    json: {\n      name: data.preferred_name,\n      imageUrl: imageUrl,\n      birthdayString: birthdayString\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        528
+      ],
+      "id": "23a9ee93-7048-4437-a91e-5635380df49a",
+      "name": "Format Birthday Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/birthdays",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2496,
+        528
+      ],
+      "id": "3bb01c62-2694-4166-bdf7-6067f31ba3ee",
+      "name": "POST Birthday Data to API",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "clpyuObmsxHrmNhQ",
+          "name": "B-day Workiz Image API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/screenshot",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2704,
+        528
+      ],
+      "id": "5b15b1ed-cec2-41f4-9bd0-1e9e177f3d75",
+      "name": "Generate Birthday Screenshot",
+      "executeOnce": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "clpyuObmsxHrmNhQ",
+          "name": "B-day Workiz Image API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "uploadFile",
+        "additionalFieldsFile": {
+          "public_id": "weekly-birthdays",
+          "upload_preset": "y_bday"
+        }
+      },
+      "type": "n8n-nodes-cloudinary.cloudinary",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        528
+      ],
+      "id": "b38f744f-495c-4ede-a855-aa8d1305b13a",
+      "name": "Upload Birthday Image to Cloudinary",
+      "credentials": {
+        "cloudinaryApi": {
+          "id": "OM2Wcm16sPajzbpS",
+          "name": "Workiz Yevgen Cloudinary"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "=:birthday: *Birthday Image Updated*\n:busts_in_silhouette: *{{ $('Format Birthday Data').all().length }} birthdays* this week",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        3120,
+        528
+      ],
+      "id": "fc70724e-628f-47cf-b13d-7475f7684727",
+      "name": "Notify Slack - Birthday Image Uploaded",
+      "webhookId": "a69ec475-ff9a-4cbe-9328-19fb04cf3eac",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://n8n-potatoe.workiz.run/webhook/12df06f2-6c1c-43e6-a242-85600cc3df0c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3760,
+        704
+      ],
+      "id": "fffaf4dd-b5b4-42ee-b051-c7152e661665",
+      "name": "Trigger Webflow Sync",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": ":calendar: No birthdays this week - skipping image generation",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2288,
+        688
+      ],
+      "id": "ef4b069b-3c79-4038-b0f2-0534d63eb0de",
+      "name": "Notify Slack - No Birthdays",
+      "webhookId": "cec04234-31dd-4c3b-a8ea-a1e25bc1ae0e",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "is-active-employee",
+              "leftValue": "={{\n(() => {\n  const termDate = $json.termination_date;\n  if (!termDate) return true;\n  const today = DateTime.now().setZone('Asia/Jerusalem').startOf('day');\n  return DateTime.fromISO(termDate) > today;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "has-hire-date",
+              "leftValue": "={{ !!$json.hire_date }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "hire-date-in-past",
+              "leftValue": "={{\n(() => {\n  const hireDate = $json.hire_date;\n  if (!hireDate) return false;\n  const today = DateTime.now().setZone('Asia/Jerusalem').endOf('day');\n  return DateTime.fromISO(hireDate) <= today;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "anniversary-is-this-month",
+              "leftValue": "={{\n(() => {\n  const hireDateStr = $json.hire_date;\n  if (!hireDateStr) return false;\n\n  const tz = 'Asia/Jerusalem';\n  const today = DateTime.now().setZone(tz);\n  const hireDate = DateTime.fromISO(hireDateStr).setZone(tz);\n\n  // Set anniversary to current year\n  const anniversaryThisYear = hireDate.set({ year: today.year });\n\n  // Check if anniversary falls in current month\n  return anniversaryThisYear.month === today.month;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "at-least-one-year",
+              "leftValue": "={{\n(() => {\n  const hireDateStr = $json.hire_date;\n  if (!hireDateStr) return false;\n\n  const tz = 'Asia/Jerusalem';\n  const today = DateTime.now().setZone(tz);\n  const hireDate = DateTime.fromISO(hireDateStr).setZone(tz);\n\n  // Calculate actual years - must be complete year(s)\n  const years = Math.floor(today.diff(hireDate, 'years').years);\n  return years >= 1;\n})()\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        1008
+      ],
+      "id": "84d6db23-d2f8-4e53-9d56-73d48967b18c",
+      "name": "Filter This Month Anniversaries"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-has-items",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2080,
+        1008
+      ],
+      "id": "65fe1697-565e-4d84-92a7-8be06caef6ab",
+      "name": "Has Anniversaries This Month?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const RAILWAY_BASE_URL = 'https://radiant-illumination-production-911f.up.railway.app';\nconst tz = 'Asia/Jerusalem';\n\n// Color mapping: 1 year at bottom, 8+ at top\nconst colorMap = {\n  1: '#FFD400',  // Yellow\n  2: '#FF9500',  // Orange\n  3: '#FF5A2C',  // Red-orange\n  4: '#D52CFF',  // Magenta\n  5: '#858585',  // Gray\n  6: '#17D256',  // Green\n  7: '#00E2FB',  // Cyan\n  8: '#00AEFF',  // Blue\n};\nconst maxColor = '#000000'; // Black for 9+ years\n\nreturn $input.all().map(item => {\n  const data = item.json;\n  \n  let anniversaryString = '';\n  let color = '#858585';\n  let years = 0;\n  \n  if (data.hire_date) {\n    const today = DateTime.now().setZone(tz);\n    const hireDate = DateTime.fromISO(data.hire_date).setZone(tz);\n    \n    // Calculate actual complete years\n    years = Math.floor(today.diff(hireDate, 'years').years);\n    \n    // Format: \"2 years\" or \"1 year\"\n    anniversaryString = years === 1 ? '1 year' : `${years} years`;\n    \n    // Get color based on years\n    color = years >= 9 ? maxColor : (colorMap[years] || maxColor);\n  }\n  \n  // Transform image URL to proxy\n  let imageUrl = data.profile_picture || '';\n  const match = imageUrl.match(/employees\\/(\\d+)\\/profile-picture/);\n  if (match) {\n    imageUrl = `${RAILWAY_BASE_URL}/api/image/${match[1]}`;\n  }\n  \n  return {\n    json: {\n      name: data.preferred_name,\n      imageUrl: imageUrl,\n      anniversary: anniversaryString,\n      color: color,\n      years: years\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        928
+      ],
+      "id": "b726a82d-a56e-4c39-9755-42a5ef3ba0f3",
+      "name": "Format Anniversary Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/anniversaries",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2496,
+        928
+      ],
+      "id": "cce4298a-9bfa-4bbe-a47c-1534deffd6e1",
+      "name": "POST Anniversary Data to API",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "clpyuObmsxHrmNhQ",
+          "name": "B-day Workiz Image API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://radiant-illumination-production-911f.up.railway.app/api/anniversaries/screenshot",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2704,
+        928
+      ],
+      "id": "08bdb763-26ce-481a-ab91-d210fd9a01b0",
+      "name": "Generate Anniversary Screenshot",
+      "executeOnce": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "clpyuObmsxHrmNhQ",
+          "name": "B-day Workiz Image API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "uploadFile",
+        "additionalFieldsFile": {
+          "public_id": "anniversaries",
+          "upload_preset": "y_bday"
+        }
+      },
+      "type": "n8n-nodes-cloudinary.cloudinary",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        928
+      ],
+      "id": "89107d46-8f72-4d36-8b6c-06e3c720aa9d",
+      "name": "Upload Anniversary Image to Cloudinary",
+      "credentials": {
+        "cloudinaryApi": {
+          "id": "OM2Wcm16sPajzbpS",
+          "name": "Workiz Yevgen Cloudinary"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "=:tada: *Anniversary Image Updated*\n:busts_in_silhouette: *{{ $('Format Anniversary Data').all().length }} anniversaries* this month",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        3120,
+        928
+      ],
+      "id": "377a5e12-3d08-40ac-bf02-b1a65546cd91",
+      "name": "Notify Slack - Anniversary Image Uploaded",
+      "webhookId": "3807c0c9-1c3c-447b-bdb4-f230f83ed2f2",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": ":calendar: No work anniversaries this month - skipping image generation",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2288,
+        1088
+      ],
+      "id": "a0acae6e-1b05-4e04-a2df-c4707e7e8dd4",
+      "name": "Notify Slack - No Anniversaries",
+      "webhookId": "8f3c4cfd-1630-43e4-ab26-22116d5bd4f8",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        320
+      ],
+      "id": "8c363eb3-e46a-4060-937b-a85f097f8c70",
+      "name": "Error Trigger - Birthday Flow"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09TAKT3KV3",
+          "mode": "id"
+        },
+        "text": "=:x: *Birthday Workflow Failed*\n:warning: Error: {{ $json.error.message }}\n:round_pushpin: Node: {{ $json.error.node }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        3120,
+        320
+      ],
+      "id": "c18e748b-3069-47f8-834f-13672c02c622",
+      "name": "Notify Slack - Birthday Error",
+      "webhookId": "f461536f-1e08-4fae-bb15-abee43ca72b2",
+      "credentials": {
+        "slackApi": {
+          "id": "auBNw6cyLbVnyrGi",
+          "name": "Marketin Robot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Birthday & Anniversary Image Generation\n\n**Trigger:** Weekly (Sunday)\n**Flow:**\n1. Fetch employees from Personio\n2. Filter for this week's birthdays / this month's anniversaries\n3. Generate images via Railway API\n4. Upload to Cloudinary\n5. Trigger Webflow sync\n\n**Improvements:**\n- Timezone-aware date calculations (Asia/Jerusalem)\n- Empty result handling with Slack notification\n- Accurate anniversary year calculation\n- Error handling with notifications",
+        "height": 1280,
+        "width": 4464,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "dcc06461-931f-4c0a-9ed4-06591ba3e73b",
+      "name": "Sticky Note - Birthday Flow"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3568,
+        704
+      ],
+      "id": "bb62d356-090b-426a-8a90-51717f0e3182",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.personio.de/v1/auth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1040,
+        784
+      ],
+      "id": "c8fc5514-f47d-4105-8ca7-9dbd4bf2c0c2",
+      "name": "Get Personio Token",
+      "notesInFlow": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "ter3PpWQ2EESNalS",
+          "name": "Workiz Personio"
+        }
+      },
+      "notes": "Uses environment variables PERSONIO_CLIENT_ID and PERSONIO_CLIENT_SECRET if available, otherwise falls back to hardcoded values. Set env vars in n8n for production security."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Weekly Trigger - Birthdays & Anniversaries": {
+      "main": [
+        [
+          {
+            "node": "Set Constants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Constants": {
+      "main": [
+        [
+          {
+            "node": "Get Personio Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Employees": {
+      "main": [
+        [
+          {
+            "node": "Split Employee Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Employee Records": {
+      "main": [
+        [
+          {
+            "node": "Normalize Employee Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Employee Fields": {
+      "main": [
+        [
+          {
+            "node": "Filter This Week Birthdays",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter This Month Anniversaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter This Week Birthdays": {
+      "main": [
+        [
+          {
+            "node": "Has Birthdays This Week?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Birthdays This Week?": {
+      "main": [
+        [
+          {
+            "node": "Format Birthday Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Slack - No Birthdays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Birthday Data": {
+      "main": [
+        [
+          {
+            "node": "POST Birthday Data to API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Birthday Data to API": {
+      "main": [
+        [
+          {
+            "node": "Generate Birthday Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Birthday Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Upload Birthday Image to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Birthday Image to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack - Birthday Image Uploaded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Slack - Birthday Image Uploaded": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter This Month Anniversaries": {
+      "main": [
+        [
+          {
+            "node": "Has Anniversaries This Month?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Anniversaries This Month?": {
+      "main": [
+        [
+          {
+            "node": "Format Anniversary Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Slack - No Anniversaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Anniversary Data": {
+      "main": [
+        [
+          {
+            "node": "POST Anniversary Data to API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Anniversary Data to API": {
+      "main": [
+        [
+          {
+            "node": "Generate Anniversary Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Anniversary Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Upload Anniversary Image to Cloudinary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Anniversary Image to Cloudinary": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack - Anniversary Image Uploaded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Slack - Anniversary Image Uploaded": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error Trigger - Birthday Flow": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack - Birthday Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Trigger Webflow Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Personio Token": {
+      "main": [
+        [
+          {
+            "node": "Fetch All Employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "4374582b-2d0e-4856-8d14-2cba9f2921b4",
+  "meta": {
+    "instanceId": "c65185ee08a244dcb6ee1c16ec55c7498e0424b2d7cc8b8b1dbb06664bc66ad6"
+  },
+  "id": "5Cn5Eha1ZXwXJovrrxlCQ",
+  "tags": []
+}

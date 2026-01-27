@@ -8,6 +8,10 @@ const puppeteer = require('puppeteer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Update data paths to use the 'data' directory
+const DATA_FILE = path.join(__dirname, 'data', 'birthdays.json');
+const ANNIVERSARIES_FILE = path.join(__dirname, 'data', 'anniversaries.json');
+
 // API Key for protected endpoints (set via environment variable)
 const API_KEY = process.env.API_KEY;
 
@@ -34,11 +38,10 @@ const requireAuth = (req, res, next) => {
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, '.')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory storage for birthdays, initialized from file if exists, or empty
 let birthdays = [];
-const DATA_FILE = 'birthdays.json';
 
 try {
     if (fs.existsSync(DATA_FILE)) {
@@ -59,7 +62,6 @@ try {
 
 // In-memory storage for anniversaries
 let anniversaries = [];
-const ANNIVERSARIES_FILE = 'anniversaries.json';
 
 try {
     if (fs.existsSync(ANNIVERSARIES_FILE)) {
@@ -226,7 +228,7 @@ app.get('/api/screenshot', requireAuth, async (req, res) => {
         await page.setViewport({ width: 1080, height: 1920 });
 
         // Navigate to the page
-        await page.goto(baseUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.goto(`${baseUrl}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
 
         // Wait a bit for images to load
         await new Promise(resolve => setTimeout(resolve, 2000));
